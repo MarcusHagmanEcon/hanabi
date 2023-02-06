@@ -85,8 +85,46 @@ strategy1 <- function(active_player, clock, fuse, table, discard, hands, info, l
   } else {
     return( c("D", 1))
   }
-  
 }
+
+
+strategy7 <- function(active_player, clock, fuse, table, discard, hands, info, last_round) {
+  own_hand_info <- info %>% filter(player == active_player) %>% select(color, number)
+  others_unknown_playable <- hand_playable(hands[,1:2],table)
+  others_info <- info %>% filter(player != active_player)
+  others_known_playable <- hand_playable(others_info[,1:2],table)
+  if (1 %in% hand_playable(own_hand_info, table) ){
+    #print('A')
+    return( c("P", which(hand_playable(own_hand_info, table) == 1)[1]) )
+  } else if (0 %in% hand_playable(own_hand_info, table) && clock < 8) {
+    #print('B')
+    return( c("D", which(hand_playable(own_hand_info, table) == 0)[1]) )
+  } else if ( sum( hand_playable(own_hand_info, table) == 3 & 
+                   !is.na(own_hand_info[,2])) > 0 & fuse > 1  ){
+    return( c("P", which(hand_playable(own_hand_info, table) == 3 & 
+                !is.na(own_hand_info[,2]))[1]) )
+  } else if (clock > 0 & TRUE %in% (others_known_playable == 3 & others_unknown_playable == 1)) {
+    #print('C')
+    reveal_index <- which((others_known_playable == 3 & 
+                             others_unknown_playable == 1) == TRUE)[1]
+    reveal_player <- hands$player[reveal_index]
+    if(is.na(others_info$number[reveal_index])){
+      reveal_categ <- "N"
+      reveal_info <- hands$number[reveal_index]
+    } else { 
+      reveal_categ <- "C"
+      reveal_info <- hands$color[reveal_index]
+    }
+    reveal_player_index <- sum( hands$player[1:reveal_index] == reveal_player)
+    return( c("R", reveal_player, reveal_categ, reveal_info) )
+    
+  } else {
+    return( c("D", 5))
+  }
+}
+
+
+
 # EXAMPLE
 
 # table <- data.frame( W = 3, R = 1, Y = 1, G = 1, B = 2)
