@@ -104,9 +104,9 @@ playgame <- function(seed,strategy){
   return(sum(table))
 }
 
-points = data.frame("1" = c(0), "2" = c(0))
-for(i in 1:1000){
-  points[i,1] = playgame(i,strategy1)
-  points[i,2] = playgame(i,strategy7)
+points = data.frame("1" = c(0))
+for(i in 1:10){
+  points[i,1] = playgame(i,strategy8)
+  #points[i,2] = playgame(i,strategy7)
   print(i)
 }
