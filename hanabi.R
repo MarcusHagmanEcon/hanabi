@@ -1,5 +1,6 @@
 rm(list = ls(all.names = TRUE))
 library(dplyr)
+library(abind)
 source('C:/Users/MA.4780/Documents/hanabi/hanabi_strategies.R')
 
 
@@ -29,12 +30,17 @@ playgame <- function(seed,strategy){
   # Initialize info set, discard pile, table
   info <- setNames(data.frame(matrix(ncol = 3, nrow = (n_players*n_hand))),c('color','number','player'))
   info$player <- rep(1:n_players, each = n_hand)
+  info_hist <- info %>% mutate("round" = 1)  # History of information sets
+  action_hist <- NA %>% matrix(nrow = 1, ncol = 5) %>% data.frame() %>% 
+    setNames( c("round", "a1", "a2", "a3", "a4") )
   table <- setNames(data.frame(matrix(0,ncol = 5, nrow = 1)),c('W','R','G','B','Y'))
   discard <- setNames(data.frame(matrix(ncol = 3, nrow =0)),c('color','number','player'))
-  counter <- 0 
+  round <- 1 
   playing = TRUE
   while (playing == TRUE) {
-    action <- strategy(player, clock, fuse, table, discard, hands[hands$player != player,], info, lastround)
+    action <- strategy(player, clock, fuse, table, discard, 
+                       hands[hands$player != player,], info, lastround, info_hist,
+                       action_hist)
     if(action[1] == 'R'){         # Reveal info
       if(clock == 0){
         print('Illegal move: clock tokens are used up.')
@@ -96,17 +102,27 @@ playgame <- function(seed,strategy){
     if(nrow(drawpile)>0){
       rownames(drawpile) <- 1:nrow(drawpile)
     }
-    counter <- counter+1
-    #print(counter)
+    
+    add_action_hist <- c(round)
+    add_action_hist <- add_action_hist %>% append(action)
+    add_action_hist <- add_action_hist %>% 
+      append(array(NA, 4 - length(action)))
+    
+    action_hist <- action_hist %>% rbind(add_action_hist)
+    
+    round <- round + 1
+    
+    info_hist <- info_hist %>% rbind(info %>% mutate("round" = round))
   }
-  # points = append(points,sum(table))
-  # print(points)
   return(sum(table))
 }
 
-points = data.frame("1" = c(0))
-for(i in 1:10){
-  points[i,1] = playgame(i,strategy8)
-  #points[i,2] = playgame(i,strategy7)
-  print(i)
-}
+# points = data.frame("1" = c(0))
+# for(i in 1:10){
+#   points[i,1] = playgame(i,strategy1)
+#   #points[i,2] = playgame(i,strategy2)
+#   #points[i,3] = playgame(i,strategy7)
+#   print(i)
+# }
+
+playgame(1, strategy8)
