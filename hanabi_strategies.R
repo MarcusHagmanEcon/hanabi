@@ -129,17 +129,14 @@ strategy7 <- function(active_player, clock, fuse, table, discard, hands, info,
   others_info <- info %>% filter(player != active_player)
   others_known_playable <- hand_playable(others_info[,1:2],table)
   if (1 %in% hand_playable(own_hand_info, table) ){
-    #print('A')
     return( c("P", which(hand_playable(own_hand_info, table) == 1)[1]) )
   } else if (0 %in% hand_playable(own_hand_info, table) && clock < 8) {
-    #print('B')
     return( c("D", which(hand_playable(own_hand_info, table) == 0)[1]) )
   } else if ( sum( hand_playable(own_hand_info, table) == 3 & 
                    !is.na(own_hand_info[,2])) > 0 & fuse > 1  ){
     return( c("P", which(hand_playable(own_hand_info, table) == 3 & 
                 !is.na(own_hand_info[,2]))[1]) )
   } else if (clock > 0 & TRUE %in% (others_known_playable == 3 & others_unknown_playable == 1)) {
-    #print('C')
     reveal_index <- which((others_known_playable == 3 & 
                              others_unknown_playable == 1) == TRUE)[1]
     reveal_player <- hands$player[reveal_index]
@@ -168,6 +165,8 @@ strategy8 <- function(active_player, clock, fuse, table, discard, hands, info,
   others_unknown_playable <- hand_playable(hands[,1:2],table)
   others_info <- info %>% filter(player != active_player)
   others_known_playable <- hand_playable(others_info[,1:2],table)
+  others_playable_but_unknown <- (others_known_playable == 3 & 
+    others_unknown_playable == 1) %>% as.integer()
   # unique = 1 if that color or number is unique in that players' hand.
   # = 0 if not
   unique <- hands %>% mutate( col_pl = paste(color, player) )%>% 
@@ -175,15 +174,23 @@ strategy8 <- function(active_player, clock, fuse, table, discard, hands, info,
     mutate(color = as.integer( !col_pl %in% col_pl[duplicated(col_pl)] )) %>%
     mutate(number = as.integer( !num_pl %in% num_pl[duplicated(num_pl)] )) %>%
     select(color, number, player)
+  others_unique_and_playable_but_unknown <- unique %>% mutate(color = 
+    color * others_playable_but_unknown, number = number * others_playable_but_unknown)
+  
+  # Just for debugging
   print(unique)
+  print(hands)
+  print(table)
+  print(others_unknown_playable)
+  print(others_known_playable)
+  print(others_playable_but_unknown)
+  print(others_unique_and_playable_but_unknown)
+  
   if (1 %in% hand_playable(own_hand_info, table) ){
-    #print('A')
     return( c("P", which(hand_playable(own_hand_info, table) == 1)[1]) )
   } else if (0 %in% hand_playable(own_hand_info, table) && clock < 8) {
-    #print('B')
     return( c("D", which(hand_playable(own_hand_info, table) == 0)[1]) )
   } else if (clock > 0 & TRUE %in% (others_known_playable == 3 & others_unknown_playable == 1)) {
-    #print('C')
     reveal_index <- which((others_known_playable == 3 & 
                              others_unknown_playable == 1) == TRUE)[1]
     reveal_player <- hands$player[reveal_index]
@@ -205,7 +212,7 @@ strategy8 <- function(active_player, clock, fuse, table, discard, hands, info,
 
 # EXAMPLE
 
-table <- data.frame( W = 3, R = 1, Y = 1, G = 0, B = 2)
+table <- data.frame( W = 1, R = 1, G = 1, B = 1, Y = 2)
 
 hands <- data.frame(color =
   c("Y", "W", "R", "W", "B",
@@ -225,5 +232,5 @@ info <- data.frame(color =
     1, 5, 5, NA, NA),
   player = rep(c(1,2,3), each = 5) )
 
-#strategy8(3, 5,4,table,0,hands,info,0)
+strategy8(3, 5,4,table,0,hands,info,0)
 
